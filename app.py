@@ -6,12 +6,11 @@ from bs4 import BeautifulSoup
 def soupfindAllnSave(pagefolder, url, soup, tag2find='img', inner='src'):
     if not os.path.exists(pagefolder):
         os.mkdir(pagefolder)
-    for res in soup.findAll(tag2find):  
+    for res in soup.findAll(tag2find):
         try:
             filename = os.path.basename(res[inner])
             filename = unquote(filename)
             fileurl = urljoin(url, res.get(inner))
-
             filepath = os.path.join(pagefolder, filename)
             res[inner] = filepath
             
@@ -22,12 +21,20 @@ def soupfindAllnSave(pagefolder, url, soup, tag2find='img', inner='src'):
         except Exception as exc:      
             print(exc)
     return soup
+    
+def soupfindAllnReplace(pagefolder, url, soup, tag2find='a', inner='href'):
+    for res in soup.findAll(tag2find):
+        link_href = res.get(inner)
+        if link_href is not None and not link_href.startswith('#'):
+            res[inner] = urljoin('https://en.wikibooks.org/', link_href)
+    return soup
 
 def savePage(response, pagefilename='page'):    
    url = response.url
    soup = BeautifulSoup(response.text, "lxml")
    pagefolder = pagefilename+'_files' # page contents 
    soup = soupfindAllnSave(pagefolder, url, soup, 'img', inner='src')
+   soup = soupfindAllnReplace(pagefolder, url, soup, 'a', inner='href')
    
    soup.find('div', id="contentSub").decompose()
    soup.find('div', id="footer").decompose()
